@@ -28,6 +28,7 @@ const User = sequelize.define('user', {
     }
   });
 
+//WHAT IS THE ARGUMENT 1 IN exit()?
 sequelize.sync()
   .then(() => console.log("Tables created successfully"))
   .catch(err => {
@@ -47,6 +48,14 @@ app.post('/users',(req,res,next)=>{
         .catch(err => next(err))
 })
 
+//use findByPk to avoid adding task to non-existing user
+//every user's tasks should start from id 1. This is not correct
+app.post('/users/:userId/tasks', (req,res,next)=>{
+    Task.create(req.body)
+        .then(task => res.json(task))
+        .catch(err => next(err))
+})
+
 app.get('/users/:userId', (req, res, next)=> {
     User.findByPk(req.params.userId)
         .then(user => {
@@ -59,5 +68,53 @@ app.get('/users/:userId', (req, res, next)=> {
         //WHY PUT next IN catch HERE?
         .catch(next);
 });
+
+app.put('/users/:userId', (req, res, next) => {
+    User.findByPk(req.params.userId)
+        .then(user => {
+            if(user){
+                return user.update(req.body)
+                    .then(user => res.json(user))
+            }else{
+                res.status(404).end();
+            }
+        })
+        .catch(next);
+})
+
+app.get('/users/:userId/tasks/:taskId', (req, res, next)=>{
+    Task.findOne({
+        where: {
+            id: req.params.taskId,
+            userId: req.params.userId
+        }
+    })
+        .then(task => {
+            if (task){
+                return res.json(task)
+            }else{
+                return res.status(404).end()
+            }
+        })
+        .catch(next)
+})
+
+// Delete a user's task
+app.delete('/users/:userId/tasks/:taskId',(req,res,next)=>{
+    Task.destroy({
+        where: {
+            id: req.params.taskId,
+            userId: req.params.userId
+        }
+    })
+        .then(task => {
+            if(task){
+                return res.status(204).end()
+            }else{
+                return res.status(404).end()
+            }
+        })
+        .catch(next)
+})
 
 app.listen(port, () => console.log("listening on port " + port))
