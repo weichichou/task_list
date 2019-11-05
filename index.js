@@ -1,5 +1,7 @@
 const express = require('express')
 const bodyParser = require('body-parser')
+
+// app will be our server object
 const app = express()
 const port = 5000
 
@@ -30,15 +32,17 @@ const User = sequelize.define('user', {
 
 //WHAT IS THE ARGUMENT 1 IN exit()?
 sequelize.sync()
-  .then(() => console.log("Tables created successfully"))
+  //.then(() => console.log("Tables created successfully"))
   .catch(err => {
     console.error("Unable to create tables, shutting down...", err);
     process.exit(1);
   });
 
+// use: 請你用這個middleware
 app.use(bodyParser.json())
 
 app.post('/echo', (req, res) => {
+    console.log(req.body)
     res.json(req.body)
 })
 
@@ -68,6 +72,7 @@ app.get('/users/:userId', (req, res, next)=> {
         //WHY PUT next IN catch HERE?
         .catch(next);
 });
+
 
 app.put('/users/:userId', (req, res, next) => {
     User.findByPk(req.params.userId)
@@ -107,8 +112,8 @@ app.delete('/users/:userId/tasks/:taskId',(req,res,next)=>{
             userId: req.params.userId
         }
     })
-        .then(task => {
-            if(task){
+        .then(numberOfTaskDeleted => {
+            if(numberOfTaskDeleted){
                 return res.status(204).end()
             }else{
                 return res.status(404).end()
@@ -117,4 +122,5 @@ app.delete('/users/:userId/tasks/:taskId',(req,res,next)=>{
         .catch(next)
 })
 
+// WHAT DOES .listen DO?
 app.listen(port, () => console.log("listening on port " + port))
